@@ -1,6 +1,7 @@
 import os
 import subprocess
 import shlex
+import getpass
 
 # Configuration settings for SSH connection
 username = 'your_username'  # Enter your SSH username
@@ -13,9 +14,15 @@ exclude_directories = {'/path/to/exclude1', '/path/to/exclude2'}  # Specify dire
 
 def execute_ssh_command(command):
     """ Execute an SSH command and return the output or 0 on failure. """
-    full_command = f"ssh -i {ssh_key_path} {username}@{hostname} -p {port} {command}"
+    if ssh_key_path and os.path.exists(ssh_key_path):
+        full_command = f"ssh -i {ssh_key_path} {username}@{hostname} -p {port} {command}"
+    else:
+        password = getpass.getpass("SSH Password: ")
+        full_command = f"sshpass -p {password} ssh {username}@{hostname} -p {port} {command}"
+    
     result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return result.stdout.decode('utf-8').strip() if result.returncode == 0 else None
+
 
 def get_remote_mod_time(remote_path):
     """Retrieve the modification time of a file on the remote system."""
